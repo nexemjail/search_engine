@@ -7,15 +7,19 @@ import urlparse
 from bs4 import BeautifulSoup
 import base64
 import codecs
+from metadata import CRAWLED_FILES_DIR
 logging.getLogger().setLevel(logging.DEBUG)
 
+
+def CustomException(Exception):
+    pass
 
 def request_url(url):
     header = {'User-agent': 'Anime bot 0.1'}
     response = requests.request('GET', url, headers=header)
     if response.status_code != 200:
         logging.exception('Got a response code {} in {}'.format(response.status_code, response.url))
-        raise Exception('Invalid status code {}'.format(response.status_code))
+        raise CustomException('Invalid status code {}'.format(response.status_code))
     return response.text
 
 
@@ -43,7 +47,7 @@ class Crawler(object):
         return ''.join(map(lambda text: text.text, texts))
 
     def _save_to_disk(self, url, text):
-        valid_filename = base64.b64encode(url)
+        valid_filename = base64.b64encode(unicode.encode(url, encoding='UTF-8'))
         with codecs.open(os.path.join(self.crawled_documents_dir, valid_filename), 'w', encoding='UTF-16') as f:
             f.write(text)
 
@@ -63,13 +67,13 @@ class Crawler(object):
 
                 next_page_tag = bs.find('a', attrs={'rel': 'nofollow next'})
                 current_page = self._construct_valid_link(next_page_tag.get('href'))
-            except Exception as e:
+            except CustomException as e:
                 logging.exception('got an href parsing error {}'.format(e))
                 pass
 
 if __name__ == '__main__':
-    crawler = Crawler('https://www.reddit.com/', '/media/files/programming/search_engine/crawled_dir')
-    crawler.crawl('https://www.reddit.com/r/anime')
+    crawler = Crawler('https://www.reddit.com/', CRAWLED_FILES_DIR)
+    crawler.crawl('https://www.reddit.com/r/anime/')
 
 
 

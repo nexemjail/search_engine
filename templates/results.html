@@ -1,0 +1,17 @@
+{% extends 'bootstrap/base_form_template.html' %}
+{% block title %}Search results{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>
+            Requested by user [{{ query }}]
+        </h1>
+
+        <ol>
+        {% for url in urls %}
+            <li><a href="{{ url }}">{{ url }}</a></li>
+        {% endfor %}
+        </ol>
+    </div>
+
+{% endblock %}

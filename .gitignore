@@ -60,3 +60,16 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+/youtube_putilin/
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/search_engine.iml
+.idea/workspace.xml
+crawled_dir/
+indices/
+inverted_indices/
+link_id_index/
+logs.txt
+requerements.txt
+youtube_putilin/
