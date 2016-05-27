@@ -1,0 +1,12 @@
+{% extends 'search_app/base_template.html' %}
+{% block title %}Search page{% endblock %}
+
+{% block content %}
+    <div class="container">
+    <form method="post" action="{%  url 'search_app:index' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Search!">
+    </form>
+    </div>
+{% endblock %}

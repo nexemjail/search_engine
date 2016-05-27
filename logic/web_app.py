@@ -1,10 +1,9 @@
 from flask import Flask, render_template, redirect, url_for
 from flask_bootstrap import Bootstrap
-from wtforms.validators import DataRequired
-from searcher import Searcher
-from forms import SearchForm
-from metadata import INDICES_DIR
 
+from logic.metadata import INDICES_DIR
+from search_app.forms import SearchForm
+from searcher import Searcher
 
 app = Flask(__name__)
 Bootstrap(app=app)

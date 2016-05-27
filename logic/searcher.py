@@ -1,6 +1,7 @@
-import os
 import json
-from metadata import INDICES_DIR
+import os
+
+from logic.metadata import INDICES_DIR
 
 
 class Searcher(object):
