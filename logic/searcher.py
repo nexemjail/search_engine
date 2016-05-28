@@ -28,7 +28,7 @@ class Searcher(object):
         query_words_in_document = defaultdict(set)
         query_words_count = len(words)
         for word in words:
-            for doc_id, position in self.inverted_index[word]:
+            for doc_id, position in self.inverted_index.get(word, []):
                 query_words_in_document[doc_id].add(word)
         return [doc_id for doc_id, unique_hits in query_words_in_document.items()
                 if len(unique_hits) == query_words_count]
@@ -36,10 +36,8 @@ class Searcher(object):
     def find_document_OR(self, query_words):
         doc_ids = set()
         for query_word in query_words:
-            have_any_word = self.inverted_index.get(query_word, None)
-            if have_any_word:
-                for doc_id, position in self.inverted_index[query_word]:
-                    doc_ids.add(doc_id)
+            for doc_id, position in self.inverted_index.get(query_word, []):
+                doc_ids.add(doc_id)
         return doc_ids
 
     def generate_snippet(self, doc_id, query_words):
