@@ -3,10 +3,13 @@
 
 {% block content %}
     <div class="container">
-    <form method="post" action="{%  url 'search_app:index' %}">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Search!">
-    </form>
+    <h1>
+        Welcome to anime
+    </h1>
+        <form method="post" action="{%  url 'search_app:index' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Search!" class="btn ">
+        </form>
     </div>
 {% endblock %}

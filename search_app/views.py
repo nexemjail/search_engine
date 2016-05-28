@@ -23,6 +23,9 @@ def index(request):
 
 @require_http_methods(['GET'])
 def search_results(request, query):
-    id_pos = searcher.find_document(query.split())
-    urls = [searcher.get_url(doc_id) for doc_id, pos in id_pos]
-    return render(request, 'search_app/results.html', {'query': query, 'urls': urls})
+    query_words = query.split()
+    # id_pos = searcher.find_document(query_words)
+    ids = searcher.find_document_OR(query_words)
+    snippets_and_urls = [(searcher.generate_snippet(doc_id, query_words), searcher.get_url(doc_id))
+                         for doc_id in ids]
+    return render(request, 'search_app/results.html', {'query': query, 'snippets_and_urls': snippets_and_urls})

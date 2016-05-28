@@ -8,10 +8,20 @@
         </h1>
 
         <ol>
-        {% for url in urls %}
-            <li><a href="{{ url }}">{{ url }}</a></li>
+        {% for snippet, url in snippets_and_urls %}
+            <div class="container">
+                <li><a href="{{ url }}">{{ url }}</a></li>
+                {{ snippet }}
+            </div>
         {% endfor %}
+        {% if not snippets_and_urls %}
+            <p>
+                No data found!
+            </p>
+        {% endif %}
+
         </ol>
+
     </div>
 
 {% endblock %}
