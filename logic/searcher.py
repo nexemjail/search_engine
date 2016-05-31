@@ -5,7 +5,6 @@ from logic.metadata import INDICES_DIR
 from collections import defaultdict
 from natural_language import to_query_terms
 
-
 class Searcher(object):
     def __init__(self, indices_directory):
         self.indices_dir = indices_directory
@@ -75,7 +74,6 @@ class Searcher(object):
 
     def get_url(self, doc_id):
         return self.id_to_url[str(doc_id)]
-
 
 if __name__ == '__main__':
     searcher = Searcher(INDICES_DIR)

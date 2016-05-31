@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-import os
-import json
-import base64
-import codecs
-from collections import defaultdict
-from metadata import INDICES_DIR
 from natural_language import to_doc_terms
 import shelve
+from collections import defaultdict
+import codecs
+import os
+import base64
+from metadata import INDICES_DIR
+import json
 
 
 class ShelveIndexer(object):
@@ -94,7 +94,6 @@ class Indexer(object):
 
 if __name__ == '__main__':
     saved_files_dir = '/media/files/programming/search_engine/crawled_dir'
-    os.mkdir('/media/files/programming/search_engine/indices/', 777)
     indexer = ShelveIndexer(saved_files_dir)
     indexer.start_indexing(INDICES_DIR)
     indexer.make_index()
