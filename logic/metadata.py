@@ -1,2 +1,6 @@
-INDICES_DIR = '/media/files/programming/search_engine/indices'
-CRAWLED_FILES_DIR = '/media/files/programming/search_engine/crawled_dir'
+import os
+
+default_path = '/home/nexemjail/search_engine/'
+
+INDICES_DIR = os.path.join(default_path, 'indices/')
+CRAWLED_FILES_DIR = os.path.join(default_path, 'crawled_dir/')

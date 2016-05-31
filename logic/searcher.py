@@ -1,49 +1,40 @@
-from __future__ import unicode_literals
 import json
 import os
 from logic.metadata import INDICES_DIR
 from collections import defaultdict
 from natural_language import to_query_terms
+from logic.indexer import Indexer
+
 
 class Searcher(object):
-    def __init__(self, indices_directory):
-        self.indices_dir = indices_directory
-        self.inverted_index = dict()
-        self.forward_index = dict()
-        self.id_to_url = dict()
-        self._load_json()
-
-    def _load_json(self):
-        def load_json(filename):
-            with open(os.path.join(self.indices_dir, filename), 'r') as f:
-                return json.load(f)
-
-        self.inverted_index = load_json('inverted_indices.json')
-        self.forward_index = load_json('forward_indices.json')
-        self.id_to_url = load_json('id_to_url.json')
+    def __init__(self, indices_directory, index_implementation):
+        self.indices = index_implementation()
+        self.indices_directory = indices_directory
+        self.indices.load_from_file(indices_directory)
 
     def find_document(self, query_words):
-        return sum([self.inverted_index[word] for word in to_query_terms(query_words)], [])
+        return sum([self.indices.inverted_index[word] for word in to_query_terms(query_words)], [])
 
     def find_document_AND(self, query_words):
         query_words_in_document = defaultdict(set)
         query_words_count = len(query_words)
         for word in to_query_terms(query_words):
-            for doc_id, position in self.inverted_index.get(word, []):
+            for doc_id, position in self.indices.inverted_index.get(word, []):
                 query_words_in_document[doc_id].add(word)
         return [doc_id for doc_id, unique_hits in query_words_in_document.items()
                 if len(unique_hits) == query_words_count]
 
     def find_document_OR(self, query_words):
         doc_ids = set()
-        for query_word in to_query_terms(query_words):
-            for doc_id, position in self.inverted_index.get(query_word, []):
+        query_terms = to_query_terms(query_words)
+        for query_term in query_terms:
+            for doc_id, position in self.indices.inverted_index.get(query_term.stem, []):
                 doc_ids.add(doc_id)
         return doc_ids
 
     def generate_snippet(self, doc_id, query_words):
 
-        document = self.forward_index[str(doc_id)]
+        document = self.indices.forward_index[str(doc_id)]
         query_terms_in_window = []
         shortest_window_length = len(document)
         best_window = []
@@ -70,11 +61,17 @@ class Searcher(object):
             pre_ellipsis = ''
         if end_index == len(document):
             post_ellipsis = ''
-        return '{} {} {}'.format(pre_ellipsis, ' '.join(document[begin_index:end_index]), post_ellipsis)
+        return '{} {} {}'.format(pre_ellipsis, ' '.join(
+            map(lambda term: term.full_word.encode('utf8'), document[begin_index:end_index])), post_ellipsis)
 
     def get_url(self, doc_id):
-        return self.id_to_url[str(doc_id)]
+        return self.indices.id_to_url[str(doc_id)]
 
 if __name__ == '__main__':
-    searcher = Searcher(INDICES_DIR)
-    docs = searcher.find_document_OR(['hi', 'kun'])
+    # from searcher import Searcher
+    from metadata import INDICES_DIR
+
+    # searcher = Searcher(INDICES_DIR, Indexer)
+    searcher = Searcher(INDICES_DIR, Indexer)
+    docs = searcher.find_document_OR('animal')
+    print docs

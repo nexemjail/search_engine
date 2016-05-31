@@ -4,13 +4,12 @@ from django.core.urlresolvers import reverse
 from forms import SearchForm
 from django.http import HttpResponseRedirect
 from django.views.decorators.http import require_http_methods
-# Create your views here.
-from __init__ import searcher
-<<<<<<< HEAD
 from logic.natural_language import to_query_terms
-=======
+from logic.indexer import Indexer
+from logic.searcher import Searcher
+from logic.metadata import INDICES_DIR
 
->>>>>>> 4e8aad3f32b70ca8448972dbb840a71bd8d0b739
+searcher = Searcher(INDICES_DIR, Indexer)
 
 @require_http_methods(['GET', 'POST'])
 def index(request):
@@ -27,7 +26,6 @@ def index(request):
 
 @require_http_methods(['GET'])
 def search_results(request, query):
-<<<<<<< HEAD
     print 'search_results!'
     # query_words = query_terms(query)
     # id_pos = searcher.find_document(query_words)
@@ -37,11 +35,4 @@ def search_results(request, query):
     snippets_and_urls = [(searcher.generate_snippet(doc_id, query), searcher.get_url(doc_id))
                          for doc_id in ids]
     print len(snippets_and_urls)
-=======
-    query_words = query.split()
-    # id_pos = searcher.find_document(query_words)
-    ids = searcher.find_document_OR(query_words)
-    snippets_and_urls = [(searcher.generate_snippet(doc_id, query_words), searcher.get_url(doc_id))
-                         for doc_id in ids]
->>>>>>> 4e8aad3f32b70ca8448972dbb840a71bd8d0b739
     return render(request, 'search_app/results.html', {'query': query, 'snippets_and_urls': snippets_and_urls})
