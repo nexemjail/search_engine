@@ -61,6 +61,64 @@ import natural_language
 #         self.url_to_id = {v: k for k, v in self.id_to_url.iteritems()}
 
 
+class ShelveIndexer(object):
+    def __init__(self):
+        self.saved_files_dir = None
+        self.forward_index = None
+        self.inverted_index = None
+        self.id_to_url = None
+        self.current_id = 0
+
+    def start_indexing(self, dir):
+        self.forward_index = shelve.open(os.path.join(dir, 'forward_index'), 'n', writeback=True)
+        self.inverted_index = shelve.open(os.path.join(dir, 'inverted_index'), 'n', writeback=True)
+        self.id_to_url = shelve.open(os.path.join(dir, 'id_to_url'), 'n', writeback=True)
+
+    def make_index(self, saved_files_dir):
+        self.saved_files_dir = saved_files_dir
+        for files_enumerated, filename in enumerate(os.listdir(self.saved_files_dir)):
+            if files_enumerated % 25 == 0:
+                print 'indexed {} files'.format(files_enumerated)
+            real_filename = str.decode(base64.b64decode(filename), encoding='UTF-8')
+            with codecs.open(os.path.join(self.saved_files_dir, filename), 'r', encoding='UTF-16') as f:
+                text = f.read()
+                doc_terms = to_doc_terms(text)
+                self.current_id += 1
+                self.id_to_url[str(self.current_id)] = real_filename
+                self.forward_index[str(self.current_id)] = doc_terms
+                for word_position, term in enumerate(doc_terms):
+                    val = (self.current_id, word_position)
+                    if self.inverted_index.has_key(term.stem):
+                        self.inverted_index[term.stem].append(val)
+                    else:
+                        self.inverted_index[term.stem] = [val]
+
+    def save_to_file(self):
+        self.forward_index.close()
+        self.inverted_index.close()
+        self.id_to_url.close()
+        # def dump_to_file(filename, obj):
+        #     with open(os.path.join(dir, filename), 'w') as f:
+        #         pickle.dump(obj, f)
+        #
+        # dump_to_file('forward_indices.pickle', self.forward_index)
+        # dump_to_file('inverted_indices.pickle', self.inverted_index)
+        # dump_to_file('id_to_url.pickle', self.id_to_url)
+
+    def load_from_file(self, indices_dir):
+        backup = sys.modules.get('natural_language', None)
+        sys.modules['natural_language'] = natural_language
+
+        self.forward_index = shelve.open(os.path.join(indices_dir, 'forward_index'), 'r', writeback=True)
+        self.inverted_index = shelve.open(os.path.join(indices_dir, 'inverted_index'), 'r', writeback=True)
+        self.id_to_url = shelve.open(os.path.join(indices_dir, 'id_to_url'), 'r', writeback=True)
+        print len(self.inverted_index)
+        if backup is None:
+            del sys.modules['natural_language']
+        else:
+            sys.modules['natural_language'] = backup
+
+
 class Indexer(object):
     def __init__(self):
         self.saved_files_dir = None
@@ -113,12 +171,11 @@ class Indexer(object):
 
 if __name__ == '__main__':
     # saved_files_dir = '/media/files/programming/search_engine/crawled_dir'
-    # indexer = ShelveIndexer(saved_files_dir)
-    # indexer.start_indexing(INDICES_DIR)
-    # indexer.make_index()
-    # indexer.save_to_disk()
-
-    indexer = Indexer()
+    indexer = ShelveIndexer()
+    indexer.start_indexing(INDICES_DIR)
     indexer.make_index(CRAWLED_FILES_DIR)
-    indexer.save_to_file(INDICES_DIR)
-    # indexer.load_from_file(INDICES_DIR)
+    indexer.save_to_file()
+    # indexer = Indexer()
+    # indexer.make_index(CRAWLED_FILES_DIR)
+    # indexer.save_to_file(INDICES_DIR)
+    # # indexer.load_from_file(INDICES_DIR)

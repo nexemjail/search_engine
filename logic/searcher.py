@@ -3,8 +3,9 @@ import os
 from logic.metadata import INDICES_DIR
 from collections import defaultdict
 from natural_language import to_query_terms
-from logic.indexer import Indexer
-
+from logic.indexer import Indexer, ShelveIndexer
+import sys
+import natural_language
 
 class Searcher(object):
     def __init__(self, indices_directory, index_implementation):
@@ -28,11 +29,18 @@ class Searcher(object):
         doc_ids = set()
         query_terms = to_query_terms(query_words)
         for query_term in query_terms:
-            for doc_id, position in self.indices.inverted_index.get(query_term.stem, []):
+            if query_term.stem in self.indices.inverted_index.keys():
+                id_pos_array = self.indices.inverted_index[query_term.stem]
+            else:
+                id_pos_array = []
+            for doc_id, position in id_pos_array:
                 doc_ids.add(doc_id)
         return doc_ids
 
     def generate_snippet(self, doc_id, query_words):
+
+        # backup = sys.modules.get('natural_language', None)
+        sys.modules['natural_language'] = natural_language
 
         document = self.indices.forward_index[str(doc_id)]
         query_terms_in_window = []
@@ -72,6 +80,6 @@ if __name__ == '__main__':
     from metadata import INDICES_DIR
 
     # searcher = Searcher(INDICES_DIR, Indexer)
-    searcher = Searcher(INDICES_DIR, Indexer)
-    docs = searcher.find_document_OR('animal')
+    searcher = Searcher(INDICES_DIR, ShelveIndexer)
+    docs = searcher.find_document_OR('bepop')
     print docs

@@ -5,11 +5,11 @@ from forms import SearchForm
 from django.http import HttpResponseRedirect
 from django.views.decorators.http import require_http_methods
 from logic.natural_language import to_query_terms
-from logic.indexer import Indexer
+from logic.indexer import Indexer, ShelveIndexer
 from logic.searcher import Searcher
 from logic.metadata import INDICES_DIR
 
-searcher = Searcher(INDICES_DIR, Indexer)
+searcher = Searcher(INDICES_DIR, ShelveIndexer)
 
 @require_http_methods(['GET', 'POST'])
 def index(request):

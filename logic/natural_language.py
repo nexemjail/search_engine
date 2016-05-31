@@ -10,7 +10,7 @@ _stopwords = stopwords.words('english')
 class Term(object):
     def __init__(self, full_word):
         self.full_word = full_word
-        self.stem = PorterStemmer().stem(full_word).lower()
+        self.stem = str(PorterStemmer().stem(full_word).lower().encode('utf-8'))
 
     def __eq__(self, other):
         return self.stem == other.stem
