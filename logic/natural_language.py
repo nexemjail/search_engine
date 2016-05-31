@@ -10,7 +10,7 @@ _stopwords = stopwords.words('english')
 class Term(object):
     def __init__(self, full_word):
         self.full_word = full_word
-        self.stem = PorterStemmer().stem(full_word).lower()
+        self.stem = str(PorterStemmer().stem(full_word).lower().encode('utf8'))
 
     def __eq__(self, other):
         return self.stem == other.stem
@@ -36,7 +36,7 @@ def stem_and_tokenize(text):
     sents = sent_tokenize(text)
     tokens = list(itertools.chain(*[TreebankWordTokenizer().tokenize(sent) for sent in sents]))
     terms = [Term(token) for token in tokens]
-    return filter(lambda term: term.is_punctuation(), terms)
+    return filter(lambda term: not term.is_punctuation(), terms)
 
 
 def to_query_terms(raw_query):

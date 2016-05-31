@@ -3,7 +3,7 @@ from flask_bootstrap import Bootstrap
 
 from logic.metadata import INDICES_DIR
 from search_app.forms import SearchForm
-from searcher import Searcher
+from logic.searcher import Searcher
 
 app = Flask(__name__)
 Bootstrap(app=app)
