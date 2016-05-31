@@ -1,0 +1,15 @@
+{% extends 'search_app/base_template.html' %}
+{% block title %}Search page{% endblock %}
+
+{% block content %}
+    <div class="container">
+    <h1>
+        Welcome to anime
+    </h1>
+        <form method="post" action="{%  url 'search_app:index' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Search!" class="btn ">
+        </form>
+    </div>
+{% endblock %}
