@@ -109,10 +109,10 @@ class ShelveIndexer(object):
         backup = sys.modules.get('natural_language', None)
         sys.modules['natural_language'] = natural_language
 
-        self.forward_index = shelve.open(os.path.join(indices_dir, 'forward_index'), 'r', writeback=True)
-        self.inverted_index = shelve.open(os.path.join(indices_dir, 'inverted_index'), 'r', writeback=True)
-        self.id_to_url = shelve.open(os.path.join(indices_dir, 'id_to_url'), 'r', writeback=True)
-        print len(self.inverted_index)
+        self.forward_index = shelve.open(os.path.join(indices_dir, 'forward_index'), 'r')#, writeback=True)
+        self.inverted_index = shelve.open(os.path.join(indices_dir, 'inverted_index'), 'r')#, writeback=True)
+        self.id_to_url = shelve.open(os.path.join(indices_dir, 'id_to_url'), 'r')#, writeback=True)
+        # print len(self.inverted_index)
         if backup is None:
             del sys.modules['natural_language']
         else:

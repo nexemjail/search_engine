@@ -1,11 +1,10 @@
-import json
-import os
 from logic.metadata import INDICES_DIR
 from collections import defaultdict
 from natural_language import to_query_terms
 from logic.indexer import Indexer, ShelveIndexer
 import sys
 import natural_language
+import time
 
 class Searcher(object):
     def __init__(self, indices_directory, index_implementation):
@@ -40,26 +39,31 @@ class Searcher(object):
     def generate_snippet(self, doc_id, query_words):
 
         # backup = sys.modules.get('natural_language', None)
-        sys.modules['natural_language'] = natural_language
+        if 'natural_language' not in sys.modules:
+            sys.modules['natural_language'] = natural_language
 
+        t1 = time.time()
         document = self.indices.forward_index[str(doc_id)]
+        print 'loading document from shelve ', time.time() - t1
         query_terms_in_window = []
-        shortest_window_length = len(document)
+        shortest_window_length = len(document) - 1
         best_window = []
-        best_words_in_window = 0
-
-        for pos, word in enumerate(document):
-            if word in to_query_terms(query_words):
-                query_terms_in_window.append((word, pos))
-                if len(query_terms_in_window) > 1 and query_terms_in_window[0][0] == word:
+        terms_count_in_best_window = 0
+        print 'length of document ', len(document)
+        t1 = time.time()
+        for pos, term in enumerate(document):
+            if term in to_query_terms(query_words):
+                query_terms_in_window.append((term, pos))
+                if len(query_terms_in_window) > 1 and query_terms_in_window[0][0] == term:
                     query_terms_in_window.pop(0)
                 current_window_len = pos - query_terms_in_window[0][1] + 1
-                window_width = len(set(query_terms_in_window))
-                if window_width > best_words_in_window \
-                    or (window_width == best_words_in_window
+                window_width = len(set(map(lambda x: x[0],query_terms_in_window)))
+                if window_width > terms_count_in_best_window \
+                    or (window_width == terms_count_in_best_window
                         and current_window_len < shortest_window_length):
                     best_window = list(query_terms_in_window)
                     shortest_window_length = current_window_len
+        print 'generating snippet itself took ', time.time() - t1
 
         begin_index = max(0, best_window[0][1] - 10)
         end_index = min(len(document), (best_window[len(best_window)-1][1] + 1) + 10)
