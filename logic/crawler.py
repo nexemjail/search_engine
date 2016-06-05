@@ -1,18 +1,39 @@
+# -*- coding: utf8 -*-
 import requests
 import logging
 import os.path
-import argparse
 import re
 import urlparse
 from bs4 import BeautifulSoup
 import base64
 import codecs
-from metadata import CRAWLED_FILES_DIR
+import html2text
+from metadata import CRAWLED_FILES_DIR,\
+    CRAWLED_FILES_DIR_HACKERNEWS, CRAWLED_FILES_DIR_WIKI,\
+    ALTCHARS
+import robotexclusionrulesparser
+import time
 logging.getLogger().setLevel(logging.DEBUG)
 
 
-def CustomException(Exception):
+def visible(element):
+    if element.parent.name in ['style', 'script', 'title', 'comment', 'navigablestring']:
+        return False
+    elif re.match('<!--.*-->', str(element.encode('utf8'))):
+        return False
+    return True
+
+
+def extract_all_text(html):
+    bs = BeautifulSoup(html, 'html.parser')
+    data = bs.findAll()
+
+    return filter(visible, data)
+
+
+class CustomException(BaseException):
     pass
+
 
 def request_url(url):
     header = {'User-agent': 'Anime bot 0.1'}
@@ -24,16 +45,32 @@ def request_url(url):
 
 
 class Crawler(object):
-    def __init__(self, domen,crawled_documents_dir):
+    def __init__(self, domen, crawled_documents_dir, max_depth=3, short_hostname=''):
         self.crawled_documents_dir = crawled_documents_dir
-        self.domen = domen
+        self.domain = domen
+        self.short_hostname = short_hostname.encode('utf8')
+        self.max_depth = max_depth
+        self.robots_txt = robotexclusionrulesparser.RobotFileParserLookalike()
+        self.robots_txt.set_url(urlparse.urljoin(self.domain, 'robots.txt'))
+        self.robots_txt.read()
+        # print self.robots_txt.user_agent
+        crawl_delay = self.robots_txt.get_crawl_delay('*')
+        if crawl_delay:
+            self.crawl_delay = crawl_delay
+        else:
+            self.crawl_delay = 0
+        self.crawled_links = set()
 
     def _construct_valid_link(self, current_url):
-        if not re.match(r'http(s)?://*', current_url):
-            link = urlparse.urljoin(self.domen, current_url)
-        else:
-            link = current_url
-        return link
+        try:
+            if not re.match(r'http(s)?://.*[/(.html)]', current_url):
+                link = urlparse.urljoin(self.domain, current_url)
+            else:
+                link = current_url
+            return link
+        except TypeError as e:
+            print current_url
+            print e
 
     @staticmethod
     def _check_link(link):
@@ -47,16 +84,56 @@ class Crawler(object):
         return ''.join(map(lambda text: text.text, texts))
 
     def _save_to_disk(self, url, text):
-        valid_filename = base64.b64encode(unicode.encode(url, encoding='UTF-8'))
-        with codecs.open(os.path.join(self.crawled_documents_dir, valid_filename), 'w', encoding='UTF-16') as f:
+        valid_filename = base64.b64encode(url.encode('UTF-8'), ALTCHARS)
+        with codecs.open(os.path.join(self.crawled_documents_dir, valid_filename), 'w', encoding='utf8') as f:
             f.write(text)
+
+    # def _extract_links(self, html):
+    #     bs = BeautifulSoup(html)
+    #     a = bs.findAll('a')
+    #     links = [self._construct_valid_link(self, el.get('href')) for el in a]
+    #     print links
+    #     return links
+
+    def crawl_by_links(self, current_page, depth=0):
+
+        # self.robots_txt = robotparser.RobotFileParser(urlparse.urljoin(self.domain, 'robots.txt'))
+        # self.robots_txt.read()
+        current_page_encoded_utf = current_page.encode('utf8')
+        if depth >= self.max_depth \
+                or not self.robots_txt.can_fetch('*', current_page) \
+                or self.short_hostname not in current_page\
+                or current_page_encoded_utf in self.crawled_links:
+            # print 'wasted {}'.format(current_page_encoded_utf)
+            return
+        try:
+            html = request_url(current_page)
+            bs = BeautifulSoup(html, 'html.parser')
+            a_tags = bs.findAll('a')
+            # links = set()
+            # for a in a_tags:
+            #     href = None
+            #     if a:
+            #         href = a.get('href')
+            #         if href:
+            #             links.add(self._construct_valid_link(href))
+
+            links = {self._construct_valid_link(a.get('href')) for a in a_tags if a and a.get('href')}
+
+            self._save_to_disk(current_page, html2text.html2text(html))
+            self.crawled_links.add(current_page_encoded_utf)
+            print 'Crawled {}'.format(current_page_encoded_utf)
+            time.sleep(self.crawl_delay/20)
+            for link in links:
+                self.crawl_by_links(link, depth + 1)
+        except CustomException:
+            return
 
     def crawl(self, current_page):
         while True:
             text = request_url(current_page)
             bs = BeautifulSoup(text, 'html.parser')
-            a_tags = bs.select('a.title')
-
+            a_tags = bs.findAll('a.title')
             try:
                 links_to_crawl = {self._construct_valid_link(link.get('href')) for link in a_tags}
                 for link in links_to_crawl:
@@ -72,8 +149,18 @@ class Crawler(object):
                 pass
 
 if __name__ == '__main__':
-    crawler = Crawler('https://www.reddit.com/', CRAWLED_FILES_DIR)
-    crawler.crawl('https://www.reddit.com/r/anime/')
+    pass
+    # html = request_url('http://tut.by/')
+    # print html2text.html2text(html)
+    # data = extract_all_text(html)
+    # # print data
+    crawler = Crawler('https://news.ycombinator.com/', CRAWLED_FILES_DIR_HACKERNEWS,
+                      short_hostname='news.ycombinator.com', max_depth=5)
+    crawler.crawl_by_links('https://news.ycombinator.com/')
+
+    # crawler = Crawler('https://en.wikipedia.org/', CRAWLED_FILES_DIR_WIKI, short_hostname='en.wikipedia.org',max_depth=10)
+    # crawler.crawl_by_links('https://en.wikipedia.org/')
+
 
 
 

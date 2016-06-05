@@ -1,10 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'search_app/base_template.html' %}
+{% block title %}Search page{% endblock %}
 
-</body>
-</html>
+{% block content %}
+    <div class="container">
+    <h1>
+        Paste address here to index
+    </h1>
+        <form method="post" action="{%  url 'search_app:index_url' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Add to index!" class="btn ">
+        </form>
+    </div>
+{% endblock %}

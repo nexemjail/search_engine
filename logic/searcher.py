@@ -1,10 +1,12 @@
+from metadata import INDICES_DIR
 from logic.metadata import INDICES_DIR
 from collections import defaultdict
 from natural_language import to_query_terms
-from logic.indexer import Indexer, ShelveIndexer
+from logic.indexer import ShelveIndexer
 import sys
 import natural_language
 import time
+
 
 class Searcher(object):
     def __init__(self, indices_directory, index_implementation):
@@ -57,7 +59,7 @@ class Searcher(object):
                 if len(query_terms_in_window) > 1 and query_terms_in_window[0][0] == term:
                     query_terms_in_window.pop(0)
                 current_window_len = pos - query_terms_in_window[0][1] + 1
-                window_width = len(set(map(lambda x: x[0],query_terms_in_window)))
+                window_width = len(set(map(lambda x: x[0], query_terms_in_window)))
                 if window_width > terms_count_in_best_window \
                     or (window_width == terms_count_in_best_window
                         and current_window_len < shortest_window_length):
@@ -81,8 +83,6 @@ class Searcher(object):
 
 if __name__ == '__main__':
     # from searcher import Searcher
-    from metadata import INDICES_DIR
-
     # searcher = Searcher(INDICES_DIR, Indexer)
     searcher = Searcher(INDICES_DIR, ShelveIndexer)
     docs = searcher.find_document_OR('bepop')

@@ -14,10 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import url
-from views import index, search_results
+from views import index, search_results, index_url
 
 app_name = 'search_app'
 urlpatterns = [
     url(r'^search_results/(?P<query>.*)$', search_results, name='search_results'),
+    url(r'index_url', index_url, name='index_url'),
     url(r'.*', index, name='index'),
 ]

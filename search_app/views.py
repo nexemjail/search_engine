@@ -1,14 +1,14 @@
 from django.shortcuts import render
 from django.core.urlresolvers import reverse
-from forms import SearchForm
+from forms import SearchForm, IndexUrlForm
 from django.http import HttpResponseRedirect
 from django.views.decorators.http import require_http_methods
 from logic.indexer import ShelveIndexer
 from logic.searcher import Searcher
-from logic.metadata import INDICES_DIR
+from logic.metadata import INDICES_DIR, INDEX_WIKI
 import time
 
-searcher = Searcher(INDICES_DIR, ShelveIndexer)
+searcher = Searcher(INDEX_WIKI, ShelveIndexer)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -32,6 +32,7 @@ def search_results(request, query):
     # print to_query_terms(query)
     begin_search_time = time.time()
     ids = searcher.find_document_OR(query)
+    print len(ids), 'ids len'
     # print ids/
     pre_snippets_time = time.time()
     snippets_and_urls = [(searcher.generate_snippet(doc_id, query), searcher.get_url(doc_id))
@@ -44,3 +45,16 @@ def search_results(request, query):
     print 'whole searching procedure took {}'.format(end_search_time - begin_search_time)
 
     return render(request, 'search_app/results.html', {'query': query, 'snippets_and_urls': snippets_and_urls})
+
+
+def index_url(request):
+    if request.method == 'GET':
+        form = IndexUrlForm()
+    elif request.method == 'POST':
+        form = IndexUrlForm(request.POST)
+        if form.is_valid():
+            url_to_index = form.cleaned_data['url_to_index']
+            print url_to_index
+            return HttpResponseRedirect(reverse('search_app:index'))
+    return render(request, 'search_app/index_form.html', {'form': form})
+
