@@ -45,8 +45,9 @@ class Searcher(object):
             sys.modules['natural_language'] = natural_language
 
         t1 = time.time()
-        document = self.indices.forward_index[str(doc_id)]
+        document = self.indices.forward_index[str(doc_id)][:]
         print 'loading document from shelve ', time.time() - t1
+        query_terms = to_query_terms(query_words)
         query_terms_in_window = []
         shortest_window_length = len(document) - 1
         best_window = []
@@ -54,7 +55,7 @@ class Searcher(object):
         print 'length of document ', len(document)
         t1 = time.time()
         for pos, term in enumerate(document):
-            if term in to_query_terms(query_words):
+            if term in query_terms:
                 query_terms_in_window.append((term, pos))
                 if len(query_terms_in_window) > 1 and query_terms_in_window[0][0] == term:
                     query_terms_in_window.pop(0)
@@ -65,18 +66,23 @@ class Searcher(object):
                         and current_window_len < shortest_window_length):
                     best_window = list(query_terms_in_window)
                     shortest_window_length = current_window_len
+                    terms_count_in_best_window = window_width
+
         print 'generating snippet itself took ', time.time() - t1
 
         begin_index = max(0, best_window[0][1] - 10)
         end_index = min(len(document), (best_window[len(best_window)-1][1] + 1) + 10)
-        pre_ellipsis = '...'
-        post_ellipsis = '...'
-        if begin_index == 0:
-            pre_ellipsis = ''
-        if end_index == len(document):
-            post_ellipsis = ''
-        return '{} {} {}'.format(pre_ellipsis, ' '.join(
-            map(lambda term: term.full_word.encode('utf8'), document[begin_index:end_index])), post_ellipsis)
+        # pre_ellipsis = '...'
+        # post_ellipsis = '...'
+        # if begin_index == 0:
+        #     pre_ellipsis = ''
+        # if end_index == len(document):
+        #     post_ellipsis = ''
+        snippet = [(term.full_word, True) if term in query_terms else (term.full_word, False)
+                   for term in document[begin_index: end_index]]
+        return snippet
+        # return '{} {} {}'.format(pre_ellipsis, ' '.join(
+        #     map(lambda term: term.full_word.encode('utf8'), document[begin_index:end_index])), post_ellipsis)
 
     def get_url(self, doc_id):
         return self.indices.id_to_url[str(doc_id)]

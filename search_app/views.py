@@ -8,7 +8,7 @@ from logic.searcher import Searcher
 from logic.metadata import INDICES_DIR, INDEX_WIKI
 import time
 
-searcher = Searcher(INDEX_WIKI, ShelveIndexer)
+searcher = Searcher(INDICES_DIR, ShelveIndexer)
 
 
 @require_http_methods(['GET', 'POST'])
