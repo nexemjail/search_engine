@@ -13,26 +13,18 @@ from metadata import CRAWLED_FILES_DIR,\
     ALTCHARS
 import robotexclusionrulesparser
 import time
+from natural_language import to_doc_terms
 logging.getLogger().setLevel(logging.DEBUG)
-
-
-def visible(element):
-    if element.parent.name in ['style', 'script', 'title', 'comment', 'navigablestring']:
-        return False
-    elif re.match('<!--.*-->', str(element.encode('utf8'))):
-        return False
-    return True
-
-
-def extract_all_text(html):
-    bs = BeautifulSoup(html, 'html.parser')
-    data = bs.findAll()
-
-    return filter(visible, data)
 
 
 class CustomException(BaseException):
     pass
+
+
+def crawl_page(page):
+    html = request_url(page)
+    text = html2text.html2text(html)
+    return text
 
 
 def request_url(url):
@@ -88,17 +80,7 @@ class Crawler(object):
         with codecs.open(os.path.join(self.crawled_documents_dir, valid_filename), 'w', encoding='utf8') as f:
             f.write(text)
 
-    # def _extract_links(self, html):
-    #     bs = BeautifulSoup(html)
-    #     a = bs.findAll('a')
-    #     links = [self._construct_valid_link(self, el.get('href')) for el in a]
-    #     print links
-    #     return links
-
     def crawl_by_links(self, current_page, depth=0):
-
-        # self.robots_txt = robotparser.RobotFileParser(urlparse.urljoin(self.domain, 'robots.txt'))
-        # self.robots_txt.read()
         current_page_encoded_utf = current_page.encode('utf8')
         if depth >= self.max_depth \
                 or not self.robots_txt.can_fetch('*', current_page) \
@@ -110,13 +92,6 @@ class Crawler(object):
             html = request_url(current_page)
             bs = BeautifulSoup(html, 'html.parser')
             a_tags = bs.findAll('a')
-            # links = set()
-            # for a in a_tags:
-            #     href = None
-            #     if a:
-            #         href = a.get('href')
-            #         if href:
-            #             links.add(self._construct_valid_link(href))
 
             links = {self._construct_valid_link(a.get('href')) for a in a_tags if a and a.get('href')}
 

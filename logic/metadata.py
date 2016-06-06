@@ -7,6 +7,8 @@ INDEX_WIKI = os.path.join(default_path, 'index_wiki/')
 CRAWLED_FILES_DIR = os.path.join(default_path, 'crawled_dir/')
 CRAWLED_FILES_DIR_HACKERNEWS = os.path.join(default_path, 'crawled_hackernews/')
 CRAWLED_FILES_DIR_WIKI = os.path.join(default_path, 'crawled_wiki/')
+CRAWLED_USER_PAGES = os.path.join(default_path, 'crawled_user/')
+INDEX_WIKI_MINI = os.path.join(default_path, 'index_wiki_mini/')
 ALTCHARS = '@$'
 
 

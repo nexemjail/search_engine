@@ -7,7 +7,8 @@ import os
 import base64
 from metadata import INDICES_DIR, CRAWLED_FILES_DIR,\
         ALTCHARS , INDEX_WIKI,\
-        CRAWLED_FILES_DIR_WIKI
+        CRAWLED_FILES_DIR_WIKI,\
+        INDEX_WIKI_MINI
 import pickle
 import sys
 import natural_language
@@ -72,16 +73,18 @@ class ShelveIndexer(object):
         self.current_id = 0
         self.index_dir = index_directory
         self.current_block_id = 0
+        self.url_to_id = None
 
     def start_indexing(self, directory):
         self.index_dir = directory
-        # self.forward_index = shelve.open(os.path.join(directory, 'forward_index'), 'n', writeback=True)
+        self.forward_index = shelve.open(os.path.join(directory, 'forward_index'), 'n', writeback=True)
         self.inverted_index = shelve.open(os.path.join(directory, 'inverted_index'), 'n', writeback=True)
         self.id_to_url = shelve.open(os.path.join(directory, 'id_to_url'), 'n', writeback=True)
+        self.url_to_id = {v: k for k, v in self.id_to_url.iteritems()}
 
     def sync(self):
         print 'Syncing...'
-        # self.inverted_index.sync()
+        self.inverted_index.sync()
         self.forward_index.sync()
         self.id_to_url.sync()
         print 'Synced!'
@@ -110,6 +113,31 @@ class ShelveIndexer(object):
             merged_index[key] = sum([block.get(key,[]) for block in blocks], [])
         merged_index.close()
 
+    def add_document(self, text, url):
+        self.current_id = len(self.forward_index.keys())
+        self.current_id += 1
+        self._add_document(text, url)
+        print 'Added {}'.format(url)
+        self.sync()
+
+    def _add_document(self, text, url):
+
+        insert_index = self.current_id
+        if url in self.url_to_id:
+            insert_index = self.url_to_id[url]
+        doc_terms = to_doc_terms(text)
+        self.id_to_url[str(insert_index)] = url
+        self.url_to_id[url] = str(insert_index)
+        self.forward_index[str(insert_index)] = doc_terms
+        for word_position, term in enumerate(doc_terms):
+            if term.is_stop_word():
+                continue
+            val = (insert_index, word_position)
+            if term.stem in self.inverted_index:
+                self.inverted_index[term.stem].append(val)
+            else:
+                self.inverted_index[term.stem] = [val]
+
     def make_index(self, saved_files_dir):
         self.saved_files_dir = saved_files_dir
         for files_enumerated, filename in enumerate(os.listdir(self.saved_files_dir)):
@@ -122,18 +150,8 @@ class ShelveIndexer(object):
             real_filename = str.decode(base64.b64decode(filename, ALTCHARS), encoding='UTF-8')
             with codecs.open(os.path.join(self.saved_files_dir, filename), 'r', encoding='utf8') as f:
                 text = f.read()
-                doc_terms = to_doc_terms(text)
                 self.current_id += 1
-                self.id_to_url[str(self.current_id)] = real_filename
-                self.forward_index[str(self.current_id)] = doc_terms
-                for word_position, term in enumerate(doc_terms):
-                    if term.is_stop_word():
-                        continue
-                    val = (self.current_id, word_position)
-                    if self.inverted_index.has_key(term.stem):
-                        self.inverted_index[term.stem].append(val)
-                    else:
-                        self.inverted_index[term.stem] = [val]
+                self._add_document(text, real_filename)
 
     def save_to_file(self):
         self.forward_index.close()
@@ -143,11 +161,13 @@ class ShelveIndexer(object):
     def load_from_file(self, indices_dir):
         backup = sys.modules.get('natural_language', None)
         sys.modules['natural_language'] = natural_language
-
+        print 'LOADING!'
         self.forward_index = shelve.open(os.path.join(indices_dir, 'forward_index'), 'r', writeback=True)
         self.inverted_index = shelve.open(os.path.join(indices_dir, 'inverted_index'), 'r', writeback=True)
         self.id_to_url = shelve.open(os.path.join(indices_dir, 'id_to_url'), 'r', writeback=True)
-        # print len(self.inverted_index)
+        self.url_to_id = {v: k for k, v in self.id_to_url.iteritems()}
+        print 'LOADED!'
+        # print len(self.forward_index)
         if backup is None:
             del sys.modules['natural_language']
         else:
@@ -206,7 +226,7 @@ class ShelveIndexer(object):
 if __name__ == '__main__':
     # saved_files_dir = '/media/files/programming/search_engine/crawled_dir'
     indexer = ShelveIndexer(INDEX_WIKI)
-    # indexer.start_indexing(INDEX_WIKI)
+    # indexer.start_indexing(INDEX_WIKI_MINI)
     # indexer.make_index(CRAWLED_FILES_DIR_WIKI)
     # indexer.save_to_file()
     indexer.current_block_id = 15

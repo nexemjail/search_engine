@@ -6,6 +6,8 @@
         <h1>
             Requested by user [{{ query }}]
         </h1>
+        Found <strong>{{ results_count }}</strong> in <strong>{{ searching_time }}s</strong>
+
 
         <ol>
         {% for snippet, url in snippets_and_urls %}
