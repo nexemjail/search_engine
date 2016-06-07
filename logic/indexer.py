@@ -75,6 +75,7 @@ class ShelveIndexer(object):
         self.index_dir = index_directory
         self.current_block_id = 0
         self.url_to_id = None
+        self.average_doc_length = None
 
     def start_indexing(self, directory):
         self.index_dir = directory
@@ -160,6 +161,23 @@ class ShelveIndexer(object):
         self.forward_index.close()
         self.inverted_index.close()
         self.id_to_url.close()
+
+    def get_avg_doc_length(self):
+        sys.modules['natural_language'] = natural_language
+        if not self.average_doc_length:
+            self.average_doc_length = 4000
+        return self.average_doc_length
+
+    def get_doc_length(self, doc_id):
+        return len(self.forward_index[str(doc_id)])
+
+    def get_document(self, doc_id):
+        return self.forward_index[str(doc_id)]
+
+    def get_total_docs_count(self):
+        if self.current_id == 0:
+            self.current_id = len(self.forward_index)
+        return self.current_id
 
     def load_from_file(self, indices_dir):
         backup = sys.modules.get('natural_language', None)

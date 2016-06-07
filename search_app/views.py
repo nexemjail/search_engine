@@ -10,7 +10,7 @@ from logic.crawler import crawl_page
 import multiprocessing.pool
 import time
 
-searcher = Searcher(H, ShelveIndexer)
+searcher = Searcher(INDEX_WIKI_MINI, ShelveIndexer)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -33,7 +33,7 @@ def search_results(request, query):
     # id_pos = searcher.find_document(query_words)
     # print to_query_terms(query)
     begin_search_time = time.time()
-    ids = list(searcher.find_document_OR(query))
+    ids = searcher.find(query)
     pre_snippets_time = time.time()
     snippets = [searcher.generate_snippet(id_, query) for id_ in ids]
     # snippets = searcher.generate_snippets(ids, query)

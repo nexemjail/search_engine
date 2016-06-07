@@ -7,6 +7,7 @@ import sys
 import natural_language
 import time
 import multiprocessing
+import math
 
 
 def _generate_snippet((document, query_words)):
@@ -137,13 +138,56 @@ class Searcher(object):
                    for term in document[begin_index: end_index]]
         return snippet
 
+    def _find_documents_by_term(self, term):
+        doc_ids = set()
+        if term.stem in self.indices.inverted_index.keys():
+            id_pos_array = self.indices.inverted_index[term.stem]
+        else:
+            id_pos_array = []
+        for doc_id, position in id_pos_array:
+            doc_ids.add(doc_id)
+        return doc_ids, len(doc_ids)
+
+    def _get_terms_count_in_document(self, doc_id, term):
+        return sum((True for t in self.indices.get_document(doc_id) if t == term))
+
+    def find_documents_and_document_sizes(self, query_terms):
+        documents_set = set()
+        documents_found = []
+        for term in query_terms:
+            doc_ids, length = self._find_documents_by_term(term)
+            documents_set |= doc_ids
+            documents_found.append(length)
+        return documents_set, documents_found
+
+    def _bm25(self, doc_id, query_terms_and_documents_found):
+        result = 0
+        doc_terms = self.indices.get_document(doc_id)
+        doc_len = len(doc_terms)
+        for query_term, documents_found in query_terms_and_documents_found:
+            tf = float(sum((1 for term in doc_terms if term == query_term))) / doc_len
+            idf = math.log(
+                (self.indices.get_total_docs_count() - documents_found + 0.5)\
+                  / (documents_found + 0.5))
+            b = 0.75
+            k1 = 1.5
+            if tf != 0:
+                result += idf * (tf * (k1 + 1)) / (tf * (1 - b + b * doc_len / self.indices.get_avg_doc_length()))
+        return result
+
     def find(self, query_words):
-        doc_ids = list(self.find_document_OR(query_words))
+        query_terms = to_query_terms(query_words)
+        documents_set, documents_found = self.find_documents_and_document_sizes(query_terms)
+        query_terms_and_documents_found = zip(query_terms, documents_found)
+        docids_and_relevances = []
+        for doc_id in documents_set:
+            docids_and_relevances.append((doc_id, self._bm25(doc_id,query_terms_and_documents_found)))
 
-        pass
+        ids_rel = sorted(docids_and_relevances, key=lambda doc_id_and_relevance: doc_id_and_relevance[1], reverse=True)
+        print ids_rel
+        return \
+            map(lambda doc_rel : doc_rel[0],ids_rel)
 
-    def _rank_by_bm_25(self, doc_id):
-        pass
 
     def get_url(self, doc_id):
         return self.indices.id_to_url[str(doc_id)]
