@@ -8,7 +8,8 @@ import base64
 from metadata import INDICES_DIR, CRAWLED_FILES_DIR,\
         ALTCHARS , INDEX_WIKI,\
         CRAWLED_FILES_DIR_WIKI,\
-        INDEX_WIKI_MINI
+        INDEX_WIKI_MINI, H,\
+        CRAWLED_FILES_DIR_WIKI_NEW
 import pickle
 import sys
 import natural_language
@@ -147,6 +148,7 @@ class ShelveIndexer(object):
             if files_enumerated % 5 == 0:
                 print 'indexed {} files'.format(files_enumerated)
 
+            # TODO : replace it
             real_filename = str.decode(base64.b64decode(filename, ALTCHARS), encoding='UTF-8')
             with codecs.open(os.path.join(self.saved_files_dir, filename), 'r', encoding='utf8') as f:
                 text = f.read()
@@ -154,6 +156,7 @@ class ShelveIndexer(object):
                 self._add_document(text, real_filename)
 
     def save_to_file(self):
+        self._merge_blocks()
         self.forward_index.close()
         self.inverted_index.close()
         self.id_to_url.close()
@@ -225,12 +228,11 @@ class ShelveIndexer(object):
 
 if __name__ == '__main__':
     # saved_files_dir = '/media/files/programming/search_engine/crawled_dir'
-    indexer = ShelveIndexer(INDEX_WIKI)
-    # indexer.start_indexing(INDEX_WIKI_MINI)
-    # indexer.make_index(CRAWLED_FILES_DIR_WIKI)
-    # indexer.save_to_file()
-    indexer.current_block_id = 15
-    indexer._merge_blocks()
+    indexer = ShelveIndexer(H)
+    indexer.start_indexing(H)
+    indexer.make_index(CRAWLED_FILES_DIR_WIKI_NEW)
+    indexer.save_to_file()
+    # indexer._merge_blocks()
     # indexer = Indexer()
     # indexer.make_index(CRAWLED_FILES_DIR)
     # indexer.save_to_file(INDICES_DIR)

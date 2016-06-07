@@ -98,13 +98,10 @@ class Searcher(object):
             # pool.join()
             current_index += step
         pool.close()
-        pool.join()с
+        pool.join()
         return snippets
 
     def generate_snippet(self, doc_id, query_words):
-        # print list(self.indices.forward_index.keys())
-        # print 'generating snippet for {}'.format(doc_id)
-        # backup = sys.modules.get('natural_language', None)
         if 'natural_language' not in sys.modules:
             sys.modules['natural_language'] = natural_language
 
@@ -136,17 +133,17 @@ class Searcher(object):
 
         begin_index = max(0, best_window[0][1] - 10)
         end_index = min(len(document), (best_window[len(best_window)-1][1] + 1) + 10)
-        # pre_ellipsis = '...'
-        # post_ellipsis = '...'
-        # if begin_index == 0:
-        #     pre_ellipsis = ''
-        # if end_index == len(document):
-        #     post_ellipsis = ''
         snippet = [(term.full_word, True) if term in query_terms else (term.full_word, False)
                    for term in document[begin_index: end_index]]
         return snippet
-        # return '{} {} {}'.format(pre_ellipsis, ' '.join(
-        #     map(lambda term: term.full_word.encode('utf8'), document[begin_index:end_index])), post_ellipsis)
+
+    def find(self, query_words):
+        doc_ids = list(self.find_document_OR(query_words))
+
+        pass
+
+    def _rank_by_bm_25(self, doc_id):
+        pass
 
     def get_url(self, doc_id):
         return self.indices.id_to_url[str(doc_id)]

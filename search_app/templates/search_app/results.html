@@ -16,7 +16,7 @@
 
                 ...{% for term, is_in_query in snippet %}
                     {% if is_in_query %}
-                        <b>{{ term }}</b>
+                        <strong>{{ term }}</strong>
                     {% else %}{{ term }}
                     {% endif %}
                 {% endfor %}...

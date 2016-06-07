@@ -48,6 +48,8 @@ def to_doc_terms(doc_raw):
 
 
 if __name__ == '__main__':
+    pass
     # print stem_and_tokenize('lelouche math')
     import nltk
     nltk.download('stopwords')
+    nltk.download('punkt')

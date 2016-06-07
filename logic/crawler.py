@@ -10,7 +10,7 @@ import codecs
 import html2text
 from metadata import CRAWLED_FILES_DIR,\
     CRAWLED_FILES_DIR_HACKERNEWS, CRAWLED_FILES_DIR_WIKI,\
-    ALTCHARS
+    ALTCHARS, CRAWLED_FILES_DIR_WIKI_NEW
 import robotexclusionrulesparser
 import time
 from natural_language import to_doc_terms
@@ -19,12 +19,6 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 class CustomException(BaseException):
     pass
-
-
-def crawl_page(page):
-    html = request_url(page)
-    text = html2text.html2text(html)
-    return text
 
 
 def request_url(url):
@@ -36,10 +30,20 @@ def request_url(url):
     return response.text
 
 
+def crawl_page(page):
+    html = request_url(page)
+    text = html2text.html2text(html)
+    return text
+
+
 class Crawler(object):
-    def __init__(self, domen, crawled_documents_dir, max_depth=3, short_hostname=''):
+    def __init__(self, domain, crawled_documents_dir,
+                 #add width
+                 max_width = 15,
+                 max_depth=3, short_hostname=''):
         self.crawled_documents_dir = crawled_documents_dir
-        self.domain = domen
+        self.domain = domain
+        self.max_width = 15
         self.short_hostname = short_hostname.encode('utf8')
         self.max_depth = max_depth
         self.robots_txt = robotexclusionrulesparser.RobotFileParserLookalike()
@@ -54,15 +58,23 @@ class Crawler(object):
         self.crawled_links = set()
 
     def _construct_valid_link(self, current_url):
-        try:
-            if not re.match(r'http(s)?://.*[/(.html)]', current_url):
-                link = urlparse.urljoin(self.domain, current_url)
-            else:
-                link = current_url
-            return link
-        except TypeError as e:
-            print current_url
-            print e
+        # try:
+        # TODO : validate
+        if not re.match(r'http(s)?://.*[/(.html)]', current_url):
+            link = urlparse.urljoin(self.domain, current_url)
+        else:
+            link = current_url
+
+        if all([el in link for el in "<>#%{}|\^~[]"]):
+            link = link.split('#')[0]
+        for el in "<>#%{}|\^~[]":
+            if el in link:
+                link = link.split(el)[0]
+
+        return link
+        # except TypeError as e:
+        #     print current_url
+        #     print e
 
     @staticmethod
     def _check_link(link):
@@ -129,12 +141,13 @@ if __name__ == '__main__':
     # print html2text.html2text(html)
     # data = extract_all_text(html)
     # # print data
-    crawler = Crawler('https://news.ycombinator.com/', CRAWLED_FILES_DIR_HACKERNEWS,
-                      short_hostname='news.ycombinator.com', max_depth=5)
-    crawler.crawl_by_links('https://news.ycombinator.com/')
+    # crawler = Crawler('https://news.ycombinator.com/', CRAWLED_FILES_DIR_HACKERNEWS,
+    #                   short_hostname='news.ycombinator.com', max_depth=5)
+    # crawler.crawl_by_links('https://news.ycombinator.com/')
 
-    # crawler = Crawler('https://en.wikipedia.org/', CRAWLED_FILES_DIR_WIKI, short_hostname='en.wikipedia.org',max_depth=10)
-    # crawler.crawl_by_links('https://en.wikipedia.org/')
+    crawler = Crawler('https://en.wikipedia.org/', CRAWLED_FILES_DIR_WIKI_NEW,
+                      short_hostname='en.wikipedia.org',max_depth=10)
+    crawler.crawl_by_links('https://en.wikipedia.org/wiki/Monthly_Sh%C5%8Dnen_Ace')
 
 
 

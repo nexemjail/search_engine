@@ -5,12 +5,12 @@ from django.http import HttpResponseRedirect
 from django.views.decorators.http import require_http_methods
 from logic.indexer import ShelveIndexer
 from logic.searcher import Searcher
-from logic.metadata import INDICES_DIR, INDEX_WIKI, CRAWLED_USER_PAGES, INDEX_WIKI_MINI
+from logic.metadata import INDICES_DIR, INDEX_WIKI, CRAWLED_USER_PAGES, INDEX_WIKI_MINI, H
 from logic.crawler import crawl_page
 import multiprocessing.pool
 import time
 
-searcher = Searcher(INDEX_WIKI_MINI, ShelveIndexer)
+searcher = Searcher(H, ShelveIndexer)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -35,8 +35,8 @@ def search_results(request, query):
     begin_search_time = time.time()
     ids = list(searcher.find_document_OR(query))
     pre_snippets_time = time.time()
-    # snippets = [searcher.generate_snippet(id_, query) for id_ in ids]
-    snippets = searcher.generate_snippets(ids, query)
+    snippets = [searcher.generate_snippet(id_, query) for id_ in ids]
+    # snippets = searcher.generate_snippets(ids, query)
     urls = [searcher.get_url(doc_id) for doc_id in ids]
     snippets_and_urls = zip(snippets, urls)
     # print len(snippets_and_urls)
@@ -65,7 +65,8 @@ def index_url(request):
                 links.append(url_to_index)
             elif filename:
                 links.extend([x for x in filename.read().split('\n') if x and not x.isspace()])
-            _ = [searcher.indices.add_document(crawl_page(link), link.encode('utf8')) for link in links]
+            # TODO : check it!
+            [searcher.indices.add_document(crawl_page(link), link.encode('utf8')) for link in links]
             return HttpResponseRedirect(reverse('search_app:index'))
     return render(request, 'search_app/index_form.html', {'form': form})
 
