@@ -12,5 +12,5 @@ INDEX_WIKI_MINI = os.path.join(default_path, 'index_wiki_mini/')
 CRAWLED_FILES_DIR_WIKI_NEW = os.path.join(default_path, 'crawled_files_wiki_new/')
 ALTCHARS = '@$'
 H = os.path.join(default_path, 'h/')
-
+AVG_DEFAULT_LENGTH = 7000
 

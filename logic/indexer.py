@@ -4,15 +4,15 @@ import shelve
 import codecs
 import os
 import base64
-from metadata import INDICES_DIR, CRAWLED_FILES_DIR,\
+from metadata import \
+        INDICES_DIR, CRAWLED_FILES_DIR,\
         ALTCHARS , INDEX_WIKI,\
         CRAWLED_FILES_DIR_WIKI,\
         INDEX_WIKI_MINI, H,\
-        CRAWLED_FILES_DIR_WIKI_NEW
-import pickle
+        CRAWLED_FILES_DIR_WIKI_NEW,\
+        AVG_DEFAULT_LENGTH
 import sys
 import natural_language
-from collections import defaultdict
 sys.modules['natural_language'] = natural_language
 
 
@@ -65,7 +65,7 @@ class ShelveIndexer(object):
         merged_index = shelve.open(os.path.join(self.index_dir, 'inverted_index'),'n')
         for key in keys:
             print 'merging ', key
-            merged_index[key] = sum([block.get(key,[]) for block in blocks], [])
+            merged_index[key] = sum([block.get(key, []) for block in blocks], [])
         merged_index.close()
 
     def add_document(self, text, url):
@@ -103,11 +103,11 @@ class ShelveIndexer(object):
             if files_enumerated % 200 == 0:
                 self.sync()
                 self._create_new_block()
-            if files_enumerated % 5 == 0:
-                print 'indexed {} files'.format(files_enumerated)
+            # if files_enumerated % 5 == 0:
+            print 'indexed {} files'.format(files_enumerated)
 
             # TODO : replace it
-            real_filename = str.decode(base64.b64decode(filename, ALTCHARS), encoding='UTF-8')
+            real_filename = str.decode(base64.b64decode(filename, ALTCHARS), encoding='utf8')
             with codecs.open(os.path.join(self.saved_files_dir, filename), 'r', encoding='utf8') as f:
                 text = f.read()
                 self.current_id += 1
@@ -121,7 +121,7 @@ class ShelveIndexer(object):
         self.data.close()
 
     def get_avg_doc_length(self):
-        return float(self.data['total_doc_length']) / self.get_total_docs_count()
+        return float(self.data.get('total_doc_length', AVG_DEFAULT_LENGTH)) / self.get_total_docs_count()
 
     def get_doc_length(self, doc_id):
         return len(self.forward_index[str(doc_id)])

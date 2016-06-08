@@ -36,7 +36,7 @@ def stem_and_tokenize(text):
     sents = sent_tokenize(text)
     tokens = list(itertools.chain(*[TreebankWordTokenizer().tokenize(sent) for sent in sents]))
     terms = [Term(token) for token in tokens]
-    return filter(lambda term: not term.is_punctuation(), terms)
+    return filter(lambda term: not term.is_punctuation() and not term.is_stop_word(), terms)
 
 
 def to_query_terms(raw_query):
