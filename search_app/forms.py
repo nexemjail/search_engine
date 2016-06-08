@@ -6,6 +6,7 @@ class SearchForm(forms.Form):
 
 
 class IndexUrlForm(forms.Form):
-    url_to_index = forms.CharField(label='url to index', min_length=5,required=True)
+    url_to_index = forms.CharField(label='url to index', min_length=5,required=False)
+    file = forms.FileField(required=False, allow_empty_file=False,)
 
 

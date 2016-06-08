@@ -36,18 +36,20 @@ def stem_and_tokenize(text):
     sents = sent_tokenize(text)
     tokens = list(itertools.chain(*[TreebankWordTokenizer().tokenize(sent) for sent in sents]))
     terms = [Term(token) for token in tokens]
-    return filter(lambda term: not term.is_punctuation(), terms)
+    return terms
 
 
 def to_query_terms(raw_query):
-    return stem_and_tokenize(raw_query)
+    return filter(lambda term: not term.is_punctuation() and not term.is_stop_word(), stem_and_tokenize(raw_query))
 
 
 def to_doc_terms(doc_raw):
-    return stem_and_tokenize(doc_raw)
+    return filter(lambda term: not term.is_punctuation(), stem_and_tokenize(doc_raw))
 
 
 if __name__ == '__main__':
+    pass
     # print stem_and_tokenize('lelouche math')
     import nltk
     nltk.download('stopwords')
+    nltk.download('punkt')

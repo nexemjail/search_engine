@@ -1,0 +1,12 @@
+{% extends 'search_app/base_template.html' %}
+{% block title %}Indexed urls{% endblock %}
+{% block content %}
+    <table class="table table-bordered">
+    {% for url in urls %}
+    <tr>
+        <td><a href="{{ url }}">{{ url }}</a></td>
+    </tr>
+    {% endfor %}
+    </table>
+
+{% endblock %}

@@ -6,7 +6,7 @@
     <h1>
         Paste address here to index
     </h1>
-        <form method="post" action="{%  url 'search_app:index_url' %}">
+        <form method="post" action="{%  url 'search_app:index_url' %}"  enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
             <input type="submit" value="Add to index!" class="btn ">

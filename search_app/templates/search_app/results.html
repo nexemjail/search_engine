@@ -6,12 +6,21 @@
         <h1>
             Requested by user [{{ query }}]
         </h1>
+        Found <strong>{{ results_count }}</strong> in <strong>{{ searching_time }}s</strong>
+
 
         <ol>
         {% for snippet, url in snippets_and_urls %}
             <div class="container">
                 <li><a href="{{ url }}">{{ url }}</a></li>
-                {{ snippet }}
+
+                ...{% for term, is_in_query in snippet %}
+                    {% if is_in_query %}
+                        <strong>{{ term }}</strong>
+                    {% else %}{{ term }}
+                    {% endif %}
+                {% endfor %}...
+
             </div>
         {% endfor %}
         {% if not snippets_and_urls %}
