@@ -10,7 +10,7 @@ from logic.crawler import crawl_page
 import multiprocessing.pool
 import time
 
-searcher = Searcher(INDEX_WIKI_MINI, ShelveIndexer)
+searcher = Searcher(H, ShelveIndexer)
 
 
 @require_http_methods(['GET', 'POST'])

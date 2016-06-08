@@ -13,8 +13,9 @@ from metadata import CRAWLED_FILES_DIR,\
     ALTCHARS, CRAWLED_FILES_DIR_WIKI_NEW
 import robotexclusionrulesparser
 import time
+import re
 from natural_language import to_doc_terms
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.DEBUG)
 
 
 class CustomException(BaseException):
@@ -59,22 +60,15 @@ class Crawler(object):
 
     def _construct_valid_link(self, current_url):
         # try:
-        # TODO : validate
-        if not re.match(r'http(s)?://.*[/(.html)]', current_url):
+        if not re.match(r'http(s)?://.*', current_url):
             link = urlparse.urljoin(self.domain, current_url)
         else:
             link = current_url
 
-        if all([el in link for el in "<>#%{}|\^~[]"]):
-            link = link.split('#')[0]
-        for el in "<>#%{}|\^~[]":
-            if el in link:
-                link = link.split(el)[0]
+        # split by special symbols to ignore self linking with anchors
+        link = re.split(r'[<>#%\{}|\\\^~\[\]]', link)[0]
 
         return link
-        # except TypeError as e:
-        #     print current_url
-        #     print e
 
     @staticmethod
     def _check_link(link):
@@ -83,12 +77,13 @@ class Crawler(object):
 
     @staticmethod
     def _exctract_text(html):
-        bs = BeautifulSoup(html,'html.parser')
-        texts = bs.select('div.content .usertext-body')
+        bs = BeautifulSoup(html, 'html.parser')
+        texts = bs.select('div.content.usertext-body')
         return ''.join(map(lambda text: text.text, texts))
 
     def _save_to_disk(self, url, text):
-        valid_filename = base64.b64encode(url.encode('UTF-8'), ALTCHARS)
+        # todo : solve something cause of file length overflow
+        valid_filename = base64.b64encode(url.encode('utf8'), ALTCHARS)
         with codecs.open(os.path.join(self.crawled_documents_dir, valid_filename), 'w', encoding='utf8') as f:
             f.write(text)
 
@@ -110,7 +105,7 @@ class Crawler(object):
             self._save_to_disk(current_page, html2text.html2text(html))
             self.crawled_links.add(current_page_encoded_utf)
             print 'Crawled {}'.format(current_page_encoded_utf)
-            time.sleep(self.crawl_delay/20)
+            time.sleep(self.crawl_delay)
             for link in links:
                 self.crawl_by_links(link, depth + 1)
         except CustomException:
